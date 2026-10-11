@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791483411173,
+      "tag": "0000_init_crm_schema_and_demo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791484086507,
+      "tag": "0001_seed_ai_comms_quotations_applications",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791484818820,
+      "tag": "0002_seed_documents_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791486000287,
+      "tag": "0003_user_roles_admin_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791486438505,
+      "tag": "0004_integration_settings_and_audit_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791629409690,
+      "tag": "0005_multi_tenant_organizations",
+      "breakpoints": true
+    }
+  ]
+}
