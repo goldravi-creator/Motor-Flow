@@ -32,3 +32,6 @@ build-vercel.log
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+.env*

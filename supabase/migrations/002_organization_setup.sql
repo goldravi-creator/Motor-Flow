@@ -41,7 +41,6 @@ END;
 $$;
 
 -- Function to check if user is platform superadmin (by email)
--- IMPORTANT: Replace 'your-email@example.com' with YOUR actual email
 CREATE OR REPLACE FUNCTION public.check_and_set_superadmin()
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
@@ -51,8 +50,8 @@ BEGIN
   -- Get current user's email
   SELECT email INTO v_user_email FROM auth.users WHERE id = auth.uid();
   
-  -- CHECK: Replace this with YOUR email address
-  IF v_user_email = 'your-email@example.com' THEN
+  -- Platform owner email
+  IF v_user_email = 'goldravi@gmail.com' THEN
     v_is_superadmin := true;
   END IF;
   
@@ -85,7 +84,7 @@ CREATE TRIGGER on_auth_user_created
 -- MANUAL SUPERADMIN SETUP
 -- ============================================================================
 -- Run this function manually after deploying to set yourself as superadmin
--- Usage: SELECT public.set_superadmin('your-email@example.com');
+-- Usage: SELECT public.set_superadmin('goldravi@gmail.com');
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.set_superadmin(p_email text)

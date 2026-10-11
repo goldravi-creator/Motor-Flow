@@ -41,7 +41,7 @@ CREATE POLICY "notifications_user_view" ON public.notifications
     public.is_superadmin()
     OR user_id = auth.uid()
     OR user_id IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -51,14 +51,14 @@ CREATE POLICY "notifications_user_update" ON public.notifications
     public.is_superadmin()
     OR user_id = auth.uid()
     OR user_id IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   )
   WITH CHECK (
     public.is_superadmin()
     OR user_id = auth.uid()
     OR user_id IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -67,7 +67,7 @@ CREATE POLICY "notifications_system_insert" ON public.notifications
   WITH CHECK (
     public.is_superadmin()
     OR user_id IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
     OR user_id = auth.uid()
   );

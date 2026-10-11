@@ -46,10 +46,16 @@ RETURNS SETOF uuid LANGUAGE sql SECURITY DEFINER AS $$
 $$;
 
 -- Get all member IDs in user's visible tree (self + descendants)
+-- Returns the PROFILE IDs (user ids) of self + all descendant members
 CREATE OR REPLACE FUNCTION public.get_visible_member_ids(p_user_id uuid)
 RETURNS SETOF uuid LANGUAGE sql SECURITY DEFINER AS $$
-  SELECT id FROM public.get_descendant_member_ids(
-    (SELECT id FROM public.organization_members WHERE profile_id = p_user_id LIMIT 1)
+  SELECT om.profile_id
+  FROM public.organization_members om
+  WHERE om.id IN (
+    SELECT get_descendant_member_ids
+    FROM public.get_descendant_member_ids(
+      (SELECT id FROM public.organization_members WHERE profile_id = p_user_id LIMIT 1)
+    )
   );
 $$;
 
@@ -64,7 +70,7 @@ CREATE OR REPLACE FUNCTION public.can_manage_user(p_manager_id uuid, p_target_id
 RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.get_descendant_member_ids(p_manager_id) 
-    WHERE id = p_target_id
+    WHERE get_descendant_member_ids = p_target_id
   );
 $$;
 
@@ -83,7 +89,7 @@ CREATE POLICY "hierarchy_view_leads" ON public.leads
   USING (
     public.is_superadmin()
     OR assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -92,7 +98,7 @@ CREATE POLICY "hierarchy_insert_leads" ON public.leads
   WITH CHECK (
     public.is_superadmin()
     OR assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
     AND organization_id = public.get_current_user_org_id()
   );
@@ -102,13 +108,13 @@ CREATE POLICY "hierarchy_update_leads" ON public.leads
   USING (
     public.is_superadmin()
     OR assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   )
   WITH CHECK (
     public.is_superadmin()
     OR assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -117,7 +123,7 @@ CREATE POLICY "hierarchy_delete_leads" ON public.leads
   USING (
     public.is_superadmin()
     OR assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -134,7 +140,7 @@ CREATE POLICY "hierarchy_view_customers" ON public.customers
     OR id IN (
       SELECT DISTINCT customer_id FROM public.leads 
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -157,11 +163,11 @@ CREATE POLICY "hierarchy_view_tasks" ON public.tasks
   USING (
     public.is_superadmin()
     OR assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -171,11 +177,11 @@ CREATE POLICY "hierarchy_insert_tasks" ON public.tasks
   WITH CHECK (
     public.is_superadmin()
     OR assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -190,7 +196,7 @@ CREATE POLICY "hierarchy_view_notes" ON public.notes
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -201,7 +207,7 @@ CREATE POLICY "hierarchy_insert_notes" ON public.notes
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -216,7 +222,7 @@ CREATE POLICY "hierarchy_view_activities" ON public.lead_activities
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -227,7 +233,7 @@ CREATE POLICY "hierarchy_insert_activities" ON public.lead_activities
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -242,7 +248,7 @@ CREATE POLICY "hierarchy_view_whatsapp" ON public.whatsapp_messages
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -253,7 +259,7 @@ CREATE POLICY "hierarchy_insert_whatsapp" ON public.whatsapp_messages
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -268,7 +274,7 @@ CREATE POLICY "hierarchy_view_calls" ON public.call_records
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -279,7 +285,7 @@ CREATE POLICY "hierarchy_insert_calls" ON public.call_records
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -295,7 +301,7 @@ CREATE POLICY "hierarchy_view_quotations" ON public.quotations
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -306,7 +312,7 @@ CREATE POLICY "hierarchy_insert_quotations" ON public.quotations
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -322,7 +328,7 @@ CREATE POLICY "hierarchy_view_applications" ON public.applications
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -337,7 +343,7 @@ CREATE POLICY "hierarchy_view_documents" ON public.documents
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -348,7 +354,7 @@ CREATE POLICY "hierarchy_insert_documents" ON public.documents
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -363,7 +369,7 @@ CREATE POLICY "hierarchy_view_payments" ON public.payments
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -374,7 +380,7 @@ CREATE POLICY "hierarchy_insert_payments" ON public.payments
     public.is_superadmin()
     OR lead_id IN (
       SELECT id FROM public.leads WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -411,8 +417,8 @@ CREATE POLICY "hierarchy_insert_members" ON public.organization_members
         SELECT 1 FROM public.organization_members om
         WHERE om.profile_id = auth.uid()
         AND om.org_role = 'team_leader'
-        AND NEW.org_role = 'telecaller'
-        AND NEW.manager_id = om.id
+        AND organization_members.org_role = 'telecaller'
+        AND organization_members.manager_id = om.id
       )
     )
   );

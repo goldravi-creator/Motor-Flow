@@ -61,6 +61,7 @@ $$;
 -- ============================================================================
 
 -- INSURANCE_LEADS: Only accessible if org has insurance access
+DROP POLICY IF EXISTS "superadmin_insurance_leads" ON public.insurance_leads;
 DROP POLICY IF EXISTS "hierarchy_view_insurance_leads" ON public.insurance_leads;
 DROP POLICY IF EXISTS "hierarchy_insert_insurance_leads" ON public.insurance_leads;
 DROP POLICY IF EXISTS "hierarchy_update_insurance_leads" ON public.insurance_leads;
@@ -76,7 +77,7 @@ CREATE POLICY "hierarchy_view_insurance_leads" ON public.insurance_leads
   USING (
     public.org_has_product_access('insurance')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -85,7 +86,7 @@ CREATE POLICY "hierarchy_insert_insurance_leads" ON public.insurance_leads
   WITH CHECK (
     public.org_has_product_access('insurance')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
     AND organization_id = public.get_current_user_org_id()
   );
@@ -95,13 +96,13 @@ CREATE POLICY "hierarchy_update_insurance_leads" ON public.insurance_leads
   USING (
     public.org_has_product_access('insurance')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   )
   WITH CHECK (
     public.org_has_product_access('insurance')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -110,11 +111,12 @@ CREATE POLICY "hierarchy_delete_insurance_leads" ON public.insurance_leads
   USING (
     public.org_has_product_access('insurance')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
 -- LOAN_LEADS: Only accessible if org has loan access
+DROP POLICY IF EXISTS "superadmin_loan_leads" ON public.loan_leads;
 DROP POLICY IF EXISTS "hierarchy_view_loan_leads" ON public.loan_leads;
 DROP POLICY IF EXISTS "hierarchy_insert_loan_leads" ON public.loan_leads;
 DROP POLICY IF EXISTS "hierarchy_update_loan_leads" ON public.loan_leads;
@@ -130,7 +132,7 @@ CREATE POLICY "hierarchy_view_loan_leads" ON public.loan_leads
   USING (
     public.org_has_product_access('loan')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -139,7 +141,7 @@ CREATE POLICY "hierarchy_insert_loan_leads" ON public.loan_leads
   WITH CHECK (
     public.org_has_product_access('loan')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
     AND organization_id = public.get_current_user_org_id()
   );
@@ -149,13 +151,13 @@ CREATE POLICY "hierarchy_update_loan_leads" ON public.loan_leads
   USING (
     public.org_has_product_access('loan')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   )
   WITH CHECK (
     public.org_has_product_access('loan')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -164,11 +166,12 @@ CREATE POLICY "hierarchy_delete_loan_leads" ON public.loan_leads
   USING (
     public.org_has_product_access('loan')
     AND assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
 -- INSURANCE_QUOTATIONS: Only accessible if org has insurance access
+DROP POLICY IF EXISTS "superadmin_insurance_quotations" ON public.insurance_quotations;
 DROP POLICY IF EXISTS "hierarchy_view_insurance_quotations" ON public.insurance_quotations;
 DROP POLICY IF EXISTS "hierarchy_insert_insurance_quotations" ON public.insurance_quotations;
 DROP POLICY IF EXISTS "hierarchy_update_insurance_quotations" ON public.insurance_quotations;
@@ -185,7 +188,7 @@ CREATE POLICY "hierarchy_view_insurance_quotations" ON public.insurance_quotatio
     AND lead_id IN (
       SELECT id FROM public.insurance_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -197,7 +200,7 @@ CREATE POLICY "hierarchy_insert_insurance_quotations" ON public.insurance_quotat
     AND lead_id IN (
       SELECT id FROM public.insurance_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -209,7 +212,7 @@ CREATE POLICY "hierarchy_update_insurance_quotations" ON public.insurance_quotat
     AND lead_id IN (
       SELECT id FROM public.insurance_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   )
@@ -218,12 +221,13 @@ CREATE POLICY "hierarchy_update_insurance_quotations" ON public.insurance_quotat
     AND lead_id IN (
       SELECT id FROM public.insurance_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
 
 -- LOAN_QUOTATIONS: Only accessible if org has loan access
+DROP POLICY IF EXISTS "superadmin_loan_quotations" ON public.loan_quotations;
 DROP POLICY IF EXISTS "hierarchy_view_loan_quotations" ON public.loan_quotations;
 DROP POLICY IF EXISTS "hierarchy_insert_loan_quotations" ON public.loan_quotations;
 DROP POLICY IF EXISTS "hierarchy_update_loan_quotations" ON public.loan_quotations;
@@ -240,7 +244,7 @@ CREATE POLICY "hierarchy_view_loan_quotations" ON public.loan_quotations
     AND lead_id IN (
       SELECT id FROM public.loan_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -252,7 +256,7 @@ CREATE POLICY "hierarchy_insert_loan_quotations" ON public.loan_quotations
     AND lead_id IN (
       SELECT id FROM public.loan_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -264,7 +268,7 @@ CREATE POLICY "hierarchy_update_loan_quotations" ON public.loan_quotations
     AND lead_id IN (
       SELECT id FROM public.loan_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   )
@@ -273,7 +277,7 @@ CREATE POLICY "hierarchy_update_loan_quotations" ON public.loan_quotations
     AND lead_id IN (
       SELECT id FROM public.loan_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );

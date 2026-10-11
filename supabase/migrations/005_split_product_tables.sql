@@ -155,6 +155,38 @@ CREATE INDEX idx_loan_quotations_lead ON public.loan_quotations(lead_id);
 CREATE INDEX idx_loan_quotations_org ON public.loan_quotations(organization_id);
 
 -- ============================================================================
+-- 4b. SEED DEMO AUTH USERS (FK PREREQUISITE FOR DATA MIGRATION)
+-- ----------------------------------------------------------------------------
+-- The new product tables reference assigned_to/created_by -> auth.users(id).
+-- The demo data copied below references the demo profile IDs (a0000000-...)
+-- that only exist in public.profiles. Create matching auth.users rows so the
+-- FK constraints pass. The on_auth_user_created trigger uses ON CONFLICT
+-- DO NOTHING for profiles/user_roles, so existing demo profiles and roles are
+-- left untouched (hierarchy unchanged). Real signups still flow normally.
+-- ============================================================================
+INSERT INTO auth.users
+  (id, aud, role, email, encrypted_password, email_confirmed_at,
+   raw_user_meta_data, raw_app_meta_data, confirmation_token,
+   recovery_token, email_change, created_at, updated_at)
+VALUES
+  ('a0000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'ravi.sharma@motorflow.in',
+   '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiD3PwBIjmx1G8S5ZheY7nvWaY1eEGa', now(),
+   '{"full_name":"Ravi Sharma"}', '{}', '', '', '', now(), now()),
+  ('a0000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'anjali.verma@motorflow.in',
+   '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiD3PwBIjmx1G8S5ZheY7nvWaY1eEGa', now(),
+   '{"full_name":"Anjali Verma"}', '{}', '', '', '', now(), now()),
+  ('a0000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'vikram.singh@motorflow.in',
+   '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiD3PwBIjmx1G8S5ZheY7nvWaY1eEGa', now(),
+   '{"full_name":"Vikram Singh"}', '{}', '', '', '', now(), now()),
+  ('a0000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'priya.nair@motorflow.in',
+   '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiD3PwBIjmx1G8S5ZheY7nvWaY1eEGa', now(),
+   '{"full_name":"Priya Nair"}', '{}', '', '', '', now(), now()),
+  ('a0000000-0000-4000-8000-000000000005', 'authenticated', 'authenticated', 'amit.kulkarni@motorflow.in',
+   '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiD3PwBIjmx1G8S5ZheY7nvWaY1eEGa', now(),
+   '{"full_name":"Amit Kulkarni"}', '{}', '', '', '', now(), now())
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
 -- 5. MIGRATE EXISTING DATA FROM leads TABLE
 -- ============================================================================
 
@@ -214,7 +246,7 @@ INSERT INTO public.insurance_quotations (
 )
 SELECT q.id, q.lead_id, l.organization_id, q.created_by, q.provider,
   q.premium, q.coverage, q.idv, q.status, q.valid_until, q.notes,
-  q.created_at, q.updated_at
+  q.created_at, q.created_at AS updated_at
 FROM public.quotations q
 JOIN public.leads l ON q.lead_id = l.id
 WHERE q.product = 'insurance';
@@ -227,7 +259,7 @@ INSERT INTO public.loan_quotations (
 )
 SELECT q.id, q.lead_id, l.organization_id, q.created_by, q.provider,
   q.interest_rate, q.loan_amount, q.tenure_months, q.emi,
-  q.status, q.valid_until, q.notes, q.created_at, q.updated_at
+  q.status, q.valid_until, q.notes, q.created_at, q.created_at AS updated_at
 FROM public.quotations q
 JOIN public.leads l ON q.lead_id = l.id
 WHERE q.product = 'loan';
@@ -255,7 +287,7 @@ CREATE POLICY "hierarchy_view_insurance_leads" ON public.insurance_leads
   FOR SELECT TO authenticated
   USING (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -263,7 +295,7 @@ CREATE POLICY "hierarchy_insert_insurance_leads" ON public.insurance_leads
   FOR INSERT TO authenticated
   WITH CHECK (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
     AND organization_id = public.get_current_user_org_id()
   );
@@ -272,12 +304,12 @@ CREATE POLICY "hierarchy_update_insurance_leads" ON public.insurance_leads
   FOR UPDATE TO authenticated
   USING (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   )
   WITH CHECK (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -285,7 +317,7 @@ CREATE POLICY "hierarchy_delete_insurance_leads" ON public.insurance_leads
   FOR DELETE TO authenticated
   USING (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -302,7 +334,7 @@ CREATE POLICY "hierarchy_view_loan_leads" ON public.loan_leads
   FOR SELECT TO authenticated
   USING (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -310,7 +342,7 @@ CREATE POLICY "hierarchy_insert_loan_leads" ON public.loan_leads
   FOR INSERT TO authenticated
   WITH CHECK (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
     AND organization_id = public.get_current_user_org_id()
   );
@@ -319,12 +351,12 @@ CREATE POLICY "hierarchy_update_loan_leads" ON public.loan_leads
   FOR UPDATE TO authenticated
   USING (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   )
   WITH CHECK (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -332,7 +364,7 @@ CREATE POLICY "hierarchy_delete_loan_leads" ON public.loan_leads
   FOR DELETE TO authenticated
   USING (
     assigned_to IN (
-      SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+      SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
     )
   );
 
@@ -351,7 +383,7 @@ CREATE POLICY "hierarchy_view_insurance_quotations" ON public.insurance_quotatio
     lead_id IN (
       SELECT id FROM public.insurance_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -362,7 +394,7 @@ CREATE POLICY "hierarchy_insert_insurance_quotations" ON public.insurance_quotat
     lead_id IN (
       SELECT id FROM public.insurance_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -373,7 +405,7 @@ CREATE POLICY "hierarchy_update_insurance_quotations" ON public.insurance_quotat
     lead_id IN (
       SELECT id FROM public.insurance_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   )
@@ -381,7 +413,7 @@ CREATE POLICY "hierarchy_update_insurance_quotations" ON public.insurance_quotat
     lead_id IN (
       SELECT id FROM public.insurance_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -401,7 +433,7 @@ CREATE POLICY "hierarchy_view_loan_quotations" ON public.loan_quotations
     lead_id IN (
       SELECT id FROM public.loan_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -412,7 +444,7 @@ CREATE POLICY "hierarchy_insert_loan_quotations" ON public.loan_quotations
     lead_id IN (
       SELECT id FROM public.loan_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
@@ -423,7 +455,7 @@ CREATE POLICY "hierarchy_update_loan_quotations" ON public.loan_quotations
     lead_id IN (
       SELECT id FROM public.loan_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   )
@@ -431,7 +463,7 @@ CREATE POLICY "hierarchy_update_loan_quotations" ON public.loan_quotations
     lead_id IN (
       SELECT id FROM public.loan_leads
       WHERE assigned_to IN (
-        SELECT profile_id FROM public.get_visible_member_ids(auth.uid())
+        SELECT get_visible_member_ids FROM public.get_visible_member_ids(auth.uid())
       )
     )
   );
