@@ -26,17 +26,17 @@ BEGIN
   VALUES (p_org_name, p_product_access)
   RETURNING id INTO v_org_id;
   
-  -- Create organization member (owner/admin)
-  INSERT INTO public.organization_members (organization_id, profile_id, org_role)
-  VALUES (v_org_id, p_user_id, 'client_admin');
-  
-  -- Create user profile if not exists
+  -- Create user profile if not exists (first, so FK is satisfied)
   INSERT INTO public.profiles (id, full_name, email, active)
   VALUES (p_user_id, p_user_full_name, p_user_email, true)
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     email = EXCLUDED.email,
     active = true;
+  
+  -- Create organization member (owner/admin)
+  INSERT INTO public.organization_members (organization_id, profile_id, org_role)
+  VALUES (v_org_id, p_user_id, 'client_admin');
 END;
 $$;
 
