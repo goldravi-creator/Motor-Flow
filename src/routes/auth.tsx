@@ -55,13 +55,11 @@ function AuthPage() {
         if (error) throw error;
         navigate({ to: "/dashboard" });
       } else {
-        // Check for existing email
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', email.toLowerCase())
-          .maybeSingle();
-        if (existingUser) {
+        // Check for existing email (SECURITY DEFINER function works for anon users)
+        const { data: emailExists } = await supabase.rpc('check_email_exists', {
+          p_email: email,
+        });
+        if (emailExists) {
           throw new Error('Email ID already exists');
         }
 

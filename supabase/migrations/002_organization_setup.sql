@@ -115,3 +115,12 @@ BEGIN
   RETURN public.is_superadmin();
 END;
 $$;
+
+-- Check if an email already has an account (callable by anon for duplicate
+-- detection at signup). SECURITY DEFINER so it can read auth.users.
+CREATE OR REPLACE FUNCTION public.check_email_exists(p_email text)
+RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$
+  SELECT EXISTS (SELECT 1 FROM auth.users WHERE email = lower(p_email));
+$$;
+GRANT EXECUTE ON FUNCTION public.check_email_exists(text) TO anon;
+GRANT EXECUTE ON FUNCTION public.check_email_exists(text) TO authenticated;
