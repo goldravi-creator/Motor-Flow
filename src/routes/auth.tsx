@@ -55,6 +55,16 @@ function AuthPage() {
         if (error) throw error;
         navigate({ to: "/dashboard" });
       } else {
+        // Check for existing email
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email.toLowerCase())
+          .maybeSingle();
+        if (existingUser) {
+          throw new Error('Email ID already exists');
+        }
+
         // Sign up: create auth user, then create organization + member
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -69,13 +79,13 @@ function AuthPage() {
             p_user_id: authData.user.id,
             p_org_name: companyName.trim() || `${fullName}'s Workspace`,
             p_user_full_name: fullName,
-            p_user_email: email,
+            p_user_email: email.toLowerCase(),
             p_product_access: productAccess,
           });
           if (orgError) throw orgError;
         }
         
-        setNotice("Account created! Check your email to confirm, then sign in.");
+        setNotice("Please verify your email address. Check your inbox to confirm your account.");
         setMode("signin");
       }
     } catch (err) {
