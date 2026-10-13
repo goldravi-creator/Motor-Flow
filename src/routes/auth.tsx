@@ -79,7 +79,8 @@ function AuthPage() {
         setMode("signin");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const msg = err instanceof Error ? err.message : (err?.message || err?.details || typeof err === 'string' ? err : JSON.stringify(err)) || "Something went wrong";
+      setError(msg);
     } finally {
       setLoading(false);
     }
